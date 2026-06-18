@@ -21,10 +21,19 @@ export function NoteModal({ perf, note, clashWith, onNote, onClose }: Props) {
 
   return (
     <div className="sheet-backdrop" onClick={onClose}>
-      <div className="sheet" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="note-title"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') onClose();
+        }}
+      >
         <div className="sheet__head">
           <div>
-            <strong>{perf.name}</strong>
+            <strong id="note-title">{perf.name}</strong>
             <div className="muted small">
               {perf.stageName} · {formatMinutes(perf.startMin)}–
               {formatMinutes(perf.endMin)} · {perf.day.slice(0, 3)}

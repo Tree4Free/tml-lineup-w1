@@ -20,6 +20,8 @@ interface Props {
   clashes: Set<string>;
   notes: Record<string, string>;
   focus: boolean;
+  matches: Set<string>;
+  searching: boolean;
   onSelect: (id: string) => void;
 }
 
@@ -31,6 +33,8 @@ export function Timetable({
   clashes,
   notes,
   focus,
+  matches,
+  searching,
   onSelect,
 }: Props) {
   const isH = orient === 'h';
@@ -167,6 +171,8 @@ export function Timetable({
               selected={selected.has(perf.id)}
               clash={clashes.has(perf.id)}
               hasNote={Boolean(notes[perf.id])}
+              match={matches.has(perf.id)}
+              dim={searching && !matches.has(perf.id)}
               onClick={onSelect}
             />
           );

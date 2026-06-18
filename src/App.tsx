@@ -25,6 +25,7 @@ export default function App() {
   const [state, setState, hashInvalid] = useUrlState();
   const lineups = useLineups();
   const [openId, setOpenId] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
   // Opening a shared link that already has a plan starts with the sidebar open
   // (matters on mobile, where it's otherwise a closed drawer).
   const [lineupOpen, setLineupOpen] = useState(
@@ -97,6 +98,32 @@ export default function App() {
     setPlan({ ...plan, notes });
   };
 
+  // Search across act + artist names in the active weekend.
+  const q = query.trim().toLowerCase();
+  const matches = useMemo(() => {
+    const found = new Set<string>();
+    if (q && data) {
+      for (const p of data.performances) {
+        if (
+          p.name.toLowerCase().includes(q) ||
+          p.artists.some((a) => a.name.toLowerCase().includes(q))
+        ) {
+          found.add(p.id);
+        }
+      }
+    }
+    return found;
+  }, [q, data]);
+  const matchDays = useMemo(() => {
+    const days = new Set<Day>();
+    if (q && data) {
+      for (const day of DAYS) {
+        if (data.byDay[day].some((p) => matches.has(p.id))) days.add(day);
+      }
+    }
+    return days;
+  }, [q, data, matches]);
+
   const dayClashCount = byDaySelected[state.day].filter((p) =>
     clashes.has(p.id),
   ).length;
@@ -142,6 +169,10 @@ export default function App() {
         focus={state.focus}
         clashCount={dayClashCount}
         selCount={selCount}
+        query={query}
+        matchCount={matches.size}
+        matchDays={matchDays}
+        onQuery={setQuery}
         onWeekend={(weekend) => setState({ ...state, weekend })}
         onDay={(day) => setState({ ...state, day })}
         onOrient={(orient) => setState({ ...state, orient })}
@@ -150,37 +181,41 @@ export default function App() {
       />
 
       <div className="body">
-        {data ? (
-          <Timetable
-            layout={data.dayLayout[state.day]}
-            orient={state.orient}
-            performances={data.byDay[state.day]}
-            selected={selected}
-            clashes={clashes}
-            notes={plan.notes}
-            focus={state.focus}
-            onSelect={toggle}
-          />
-        ) : (
-          <div className="splash">
-            {errored === null ? (
-              <span className="muted">Loading the lineups…</span>
-            ) : (
-              <>
-                <span className="muted">
-                  Couldn’t load the lineups — {errored}
-                </span>
-                <button
-                  type="button"
-                  className="btn btn--primary"
-                  onClick={lineups.reload}
-                >
-                  Retry
-                </button>
-              </>
-            )}
-          </div>
-        )}
+        <main className="grid-region" aria-label="Timetable">
+          {data ? (
+            <Timetable
+              layout={data.dayLayout[state.day]}
+              orient={state.orient}
+              performances={data.byDay[state.day]}
+              selected={selected}
+              clashes={clashes}
+              notes={plan.notes}
+              focus={state.focus}
+              matches={matches}
+              searching={q !== ''}
+              onSelect={toggle}
+            />
+          ) : (
+            <div className="splash">
+              {errored === null ? (
+                <span className="muted">Loading the lineups…</span>
+              ) : (
+                <>
+                  <span className="muted">
+                    Couldn’t load the lineups — {errored}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn--primary"
+                    onClick={lineups.reload}
+                  >
+                    Retry
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </main>
 
         <Sidebar
           key={state.weekend}

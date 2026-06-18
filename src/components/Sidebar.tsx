@@ -77,12 +77,13 @@ export function Sidebar({
         aria-hidden="true"
       />
       <aside className={`sidebar ${open ? 'sidebar--open' : ''}`}>
-        <div className="sidebar__weekends">
+        <div className="sidebar__weekends" role="group" aria-label="Weekend">
           {WEEKENDS.map((w) => (
             <button
               key={w}
               type="button"
               className={`wktab ${w === weekend ? 'wktab--on' : ''}`}
+              aria-pressed={w === weekend}
               onClick={() => onWeekend(w)}
             >
               Weekend {w.slice(1)}

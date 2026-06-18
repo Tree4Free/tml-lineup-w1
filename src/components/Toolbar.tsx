@@ -27,6 +27,10 @@ interface Props {
   focus: boolean;
   clashCount: number;
   selCount: number;
+  query: string;
+  matchCount: number;
+  matchDays: Set<Day>;
+  onQuery: (q: string) => void;
   onWeekend: (w: Weekend) => void;
   onDay: (d: Day) => void;
   onOrient: (o: Orientation) => void;
@@ -41,6 +45,10 @@ export function Toolbar({
   focus,
   clashCount,
   selCount,
+  query,
+  matchCount,
+  matchDays,
+  onQuery,
   onWeekend,
   onDay,
   onOrient,
@@ -54,12 +62,13 @@ export function Toolbar({
         <strong className="brand__name">Tomorrowland 2026</strong>
       </span>
 
-      <div className="seg" title="Weekend">
+      <div className="seg" role="group" aria-label="Weekend">
         {WEEKENDS.map((w) => (
           <button
             key={w}
             type="button"
             className={`seg__btn ${w === weekend ? 'seg__btn--on' : ''}`}
+            aria-pressed={w === weekend}
             onClick={() => onWeekend(w)}
           >
             {w}
@@ -67,25 +76,74 @@ export function Toolbar({
         ))}
       </div>
 
-      <div className="seg">
+      <div className="seg" role="group" aria-label="Day">
         {DAYS.map((d) => (
           <button
             key={d}
             type="button"
             className={`seg__btn ${d === day ? 'seg__btn--on' : ''}`}
+            aria-pressed={d === day}
             onClick={() => onDay(d)}
           >
             {d.slice(0, 3)}
+            {matchDays.has(d) && (
+              <span className="tab-dot" aria-hidden="true" />
+            )}
           </button>
         ))}
       </div>
 
+      <div className="search">
+        <span className="search__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <circle
+              cx="11"
+              cy="11"
+              r="7"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+            <path
+              d="M21 21l-4-4"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+        </span>
+        <input
+          type="search"
+          className="search__input"
+          placeholder="Search acts…"
+          aria-label="Search acts"
+          value={query}
+          onChange={(e) => onQuery(e.target.value)}
+        />
+        {query && (
+          <button
+            type="button"
+            className="search__clear"
+            aria-label="Clear search"
+            onClick={() => onQuery('')}
+          >
+            ×
+          </button>
+        )}
+      </div>
+      {query !== '' && (
+        <span className="chip search__count" aria-live="polite">
+          {matchCount} match{matchCount === 1 ? '' : 'es'}
+        </span>
+      )}
+
       <div className="toolbar__spacer" />
 
-      <div className="seg">
+      <div className="seg" role="group" aria-label="Orientation">
         <button
           type="button"
           className={`seg__btn ${orient === 'h' ? 'seg__btn--on' : ''}`}
+          aria-pressed={orient === 'h'}
           onClick={() => onOrient('h')}
         >
           Horizontal
@@ -93,6 +151,7 @@ export function Toolbar({
         <button
           type="button"
           className={`seg__btn ${orient === 'v' ? 'seg__btn--on' : ''}`}
+          aria-pressed={orient === 'v'}
           onClick={() => onOrient('v')}
         >
           Vertical
@@ -102,6 +161,7 @@ export function Toolbar({
       <button
         type="button"
         className={`chip ${focus ? 'chip--on' : ''}`}
+        aria-pressed={focus}
         onClick={() => onFocus(!focus)}
       >
         Focus {focus ? 'on' : 'off'}
