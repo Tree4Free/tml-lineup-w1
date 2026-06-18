@@ -5,6 +5,7 @@ import {
   type Orientation,
   type Weekend,
 } from '../types';
+import { ThemeToggle } from './ThemeToggle';
 
 // Set this to hardcode the repo (e.g. with a custom domain); otherwise it's
 // derived from a GitHub Pages URL, where the path's first segment is the repo.
@@ -119,6 +120,8 @@ export function Toolbar({
       >
         Lineup · {selCount}
       </button>
+
+      <ThemeToggle />
 
       <a
         className="ghlink"

@@ -16,8 +16,11 @@
   --sidebar-w: 320px;
 }
 
+/* Dark palette: applied when the system prefers dark AND the user hasn't forced
+   a theme, or when the user explicitly picks dark. The forced selectors have
+   higher specificity, so they win over the system default either way. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']):not([data-theme='dark']) {
     --bg: #121217;
     --surface: #1c1c23;
     --surface-2: #23232c;
@@ -31,6 +34,20 @@
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 12px 34px rgba(0, 0, 0, 0.55);
   }
+}
+:root[data-theme='dark'] {
+  --bg: #121217;
+  --surface: #1c1c23;
+  --surface-2: #23232c;
+  --ink: #ededf3;
+  --muted: #9a9aa7;
+  --line: #2e2e39;
+  --accent: #9b78ff;
+  --accent-2: #b794ff;
+  --accent-soft: #2a2350;
+  --warn: #ff6f57;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 12px 34px rgba(0, 0, 0, 0.55);
 }
 
 .app {
@@ -168,6 +185,21 @@
 }
 .lineup-toggle {
   display: none;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 8px;
+}
+.theme-toggle svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
 }
 
 .ghlink {

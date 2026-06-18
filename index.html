@@ -5,6 +5,16 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tomorrowland 2026 W1 — Clashfinder</title>
+    <script>
+      // Apply the saved theme before first paint to avoid a flash.
+      try {
+        var t = localStorage.getItem('theme');
+        document.documentElement.dataset.theme =
+          t === 'light' || t === 'dark' ? t : 'system';
+      } catch (e) {
+        document.documentElement.dataset.theme = 'system';
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -9,7 +9,7 @@ const PX_PER_MIN_V = 2.1;
 const ROW_H = 56; // horizontal: one stage sub-lane is this tall (fits name + time)
 const COL_W = 152; // vertical: one stage sub-lane is this wide
 const TIME_HEADER = 32; // top header thickness
-const STAGE_LABEL = 132; // horizontal left-header (stage names) width
+const STAGE_LABEL = 176; // horizontal left-header (stage names) width
 const TIME_LABEL = 56; // vertical left-header (time ruler) width
 
 interface Props {
