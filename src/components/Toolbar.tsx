@@ -30,11 +30,13 @@ interface Props {
   query: string;
   matchCount: number;
   matchDays: Set<Day>;
+  onlyMyStages: boolean;
   onQuery: (q: string) => void;
   onWeekend: (w: Weekend) => void;
   onDay: (d: Day) => void;
   onOrient: (o: Orientation) => void;
   onFocus: (f: boolean) => void;
+  onOnlyMyStages: (v: boolean) => void;
   onToggleLineup: () => void;
 }
 
@@ -48,11 +50,13 @@ export function Toolbar({
   query,
   matchCount,
   matchDays,
+  onlyMyStages,
   onQuery,
   onWeekend,
   onDay,
   onOrient,
   onFocus,
+  onOnlyMyStages,
   onToggleLineup,
 }: Props) {
   return (
@@ -165,6 +169,16 @@ export function Toolbar({
         onClick={() => onFocus(!focus)}
       >
         Focus {focus ? 'on' : 'off'}
+      </button>
+
+      <button
+        type="button"
+        className={`chip ${onlyMyStages ? 'chip--on' : ''}`}
+        aria-pressed={onlyMyStages}
+        title="Show only stages with a selected set"
+        onClick={() => onOnlyMyStages(!onlyMyStages)}
+      >
+        My stages
       </button>
 
       {clashCount > 0 && (

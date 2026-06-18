@@ -37,6 +37,10 @@ export function Timetable({
   searching,
   onSelect,
 }: Props) {
+  if (layout.stages.length === 0) {
+    return <div className="tt-empty muted">No selected sets on this day.</div>;
+  }
+
   const isH = orient === 'h';
   // Axis runs from the day's first set start to its last set end (both bucketed
   // by the date field), with 30 min of padding on each side so the first/last

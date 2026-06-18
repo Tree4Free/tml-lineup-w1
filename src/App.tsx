@@ -26,6 +26,7 @@ export default function App() {
   const lineups = useLineups();
   const [openId, setOpenId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [onlyMyStages, setOnlyMyStages] = useState(false);
   // Opening a shared link that already has a plan starts with the sidebar open
   // (matters on mobile, where it's otherwise a closed drawer).
   const [lineupOpen, setLineupOpen] = useState(
@@ -124,6 +125,24 @@ export default function App() {
     return days;
   }, [q, data, matches]);
 
+  // Grid data for the active day, optionally limited to stages that have a
+  // selected set that day.
+  const grid = useMemo(() => {
+    if (!data) return null;
+    const dl = data.dayLayout[state.day];
+    if (!onlyMyStages) {
+      return { layout: dl, perfs: data.byDay[state.day] };
+    }
+    const visible = new Set(byDaySelected[state.day].map((p) => p.stageId));
+    return {
+      layout: {
+        ...dl,
+        stages: dl.stages.filter((s) => visible.has(s.stage.id)),
+      },
+      perfs: data.byDay[state.day].filter((p) => visible.has(p.stageId)),
+    };
+  }, [data, state.day, onlyMyStages, byDaySelected]);
+
   const dayClashCount = byDaySelected[state.day].filter((p) =>
     clashes.has(p.id),
   ).length;
@@ -173,20 +192,22 @@ export default function App() {
         matchCount={matches.size}
         matchDays={matchDays}
         onQuery={setQuery}
+        onlyMyStages={onlyMyStages}
         onWeekend={(weekend) => setState({ ...state, weekend })}
         onDay={(day) => setState({ ...state, day })}
         onOrient={(orient) => setState({ ...state, orient })}
         onFocus={(focus) => setState({ ...state, focus })}
+        onOnlyMyStages={setOnlyMyStages}
         onToggleLineup={() => setLineupOpen((o) => !o)}
       />
 
       <div className="body">
         <main className="grid-region" aria-label="Timetable">
-          {data ? (
+          {grid ? (
             <Timetable
-              layout={data.dayLayout[state.day]}
+              layout={grid.layout}
               orient={state.orient}
-              performances={data.byDay[state.day]}
+              performances={grid.perfs}
               selected={selected}
               clashes={clashes}
               notes={plan.notes}
