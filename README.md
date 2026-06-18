@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="docs/logo.svg" alt="Clashfinder — Tomorrowland 2026 W1 timetable planner" width="460" />
+  <img src="docs/logo.svg" alt="TML Schedule — Tomorrowland 2026 timetable planner" width="460" />
 </p>
 
 <p align="center">
-  A single-page <strong>festival clashfinder</strong> for the Tomorrowland 2026 lineup (both weekends) —
+  A single-page <strong>festival schedule planner</strong> for the Tomorrowland 2026 lineup (both weekends) —
   plan your sets, spot the clashes, and share your plan with a link. No backend, no account.
 </p>
 
