@@ -192,6 +192,31 @@
   fill: currentColor;
 }
 
+/* ---------- Invalid-hash warning ---------- */
+.hash-warn {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: #fff;
+  background: var(--warn);
+  box-shadow: var(--shadow-md);
+}
+.hash-warn .icon-btn {
+  color: #fff;
+  flex: none;
+}
+.hash-warn .icon-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
 /* ---------- Body layout ---------- */
 .body {
   display: flex;
@@ -379,6 +404,30 @@
   background: var(--surface);
   border-left: 1px solid var(--line);
 }
+.sidebar__weekends {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+}
+.wktab {
+  flex: 1;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 11px 0;
+  cursor: pointer;
+}
+.wktab:hover {
+  color: var(--ink);
+}
+.wktab--on {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
 .sidebar__head {
   display: flex;
   align-items: center;
@@ -389,6 +438,28 @@
 .sidebar__head h2 {
   font-size: 15px;
   margin: 0;
+}
+.lineup-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lineup-name-input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 4px 8px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+}
+.lineup-name-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .sidebar__close {
   display: none;
@@ -408,6 +479,11 @@
 }
 .daygroup {
   margin-bottom: 10px;
+}
+.daygroup + .daygroup {
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
 }
 .daygroup__title {
   display: flex;
@@ -446,6 +522,9 @@
   padding: 8px;
   border-radius: 9px;
   border: 1px solid transparent;
+}
+.li + .li {
+  margin-top: 4px;
 }
 .li:hover {
   background: var(--surface-2);

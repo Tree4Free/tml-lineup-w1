@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import './App.css';
 import { findClashes } from './lib/conflicts';
-import { useLineup } from './data/useLineup';
-import { encodeState, useUrlState } from './state/urlState';
-import { DAYS, type Day, type Performance, type WeekendPlan } from './types';
+import { useLineups } from './data/useLineups';
+import { encodeState, planHasContent, useUrlState } from './state/urlState';
+import {
+  DAYS,
+  WEEKENDS,
+  type Day,
+  type Performance,
+  type WeekendPlan,
+} from './types';
 import { Toolbar } from './components/Toolbar';
 import { Timetable } from './components/Timetable';
 import { NoteModal } from './components/NoteModal';
@@ -16,33 +22,30 @@ const emptyGroups = (): Record<Day, Performance[]> => ({
 });
 
 export default function App() {
-  const [state, setState] = useUrlState();
-  const lineup = useLineup(state.weekend);
+  const [state, setState, hashInvalid] = useUrlState();
+  const lineups = useLineups();
   const [openId, setOpenId] = useState<string | null>(null);
-  const [lineupOpen, setLineupOpen] = useState(false);
+  // Opening a shared link that already has a plan starts with the sidebar open
+  // (matters on mobile, where it's otherwise a closed drawer).
+  const [lineupOpen, setLineupOpen] = useState(
+    () =>
+      (state.name ?? '').trim() !== '' ||
+      planHasContent(state.plans[state.weekend]),
+  );
 
-  // Only treat data as ready when it's for the weekend currently selected — a
-  // stale fetch from the previous weekend reads as "loading", which also keeps
-  // the prune effect below from running against the wrong weekend's acts.
-  const ready =
-    lineup.status === 'ready' && lineup.weekend === state.weekend
-      ? lineup.data
-      : null;
-  const errored =
-    lineup.status === 'error' && lineup.weekend === state.weekend
-      ? lineup.error
-      : null;
+  const all = lineups.status === 'ready' ? lineups.data : null;
+  const errored = lineups.status === 'error' ? lineups.error : null;
+  const data = all ? all[state.weekend] : null; // active weekend's lineup
   const plan = state.plans[state.weekend];
   const selected = useMemo(() => new Set(plan.sel), [plan.sel]);
 
-  // Selected sets grouped by day (time-sorted) + clash set, scoped to the
-  // loaded weekend's data (so picks from the other weekend never interfere).
+  // Selected sets for the active weekend, grouped by day (time-sorted) + clashes.
   const { byDaySelected, clashes } = useMemo(() => {
     const grouped = emptyGroups();
     const clash = new Set<string>();
-    if (ready) {
+    if (data) {
       for (const day of DAYS) {
-        const list = ready.byDay[day]
+        const list = data.byDay[day]
           .filter((p) => selected.has(p.id))
           .sort((a, b) => a.startMin - b.startMin);
         grouped[day] = list;
@@ -50,24 +53,28 @@ export default function App() {
       }
     }
     return { byDaySelected: grouped, clashes: clash };
-  }, [ready, selected]);
+  }, [data, selected]);
 
-  // Resilience: once a weekend's data is loaded, drop any picks/notes for acts
-  // that are no longer in that lineup (other weekend's picks are left alone).
+  // Resilience: once the lineups are loaded, drop any picks/notes (in either
+  // weekend) for acts that are no longer in that weekend's lineup.
   useEffect(() => {
-    if (!ready) return;
-    const current = state.plans[state.weekend];
-    const sel = current.sel.filter((id) => ready.byId.has(id));
-    if (sel.length === current.sel.length) return;
-    const notes: Record<string, string> = {};
-    for (const id of sel) {
-      if (current.notes[id] !== undefined) notes[id] = current.notes[id];
+    if (!all) return;
+    let changed = false;
+    const plans = { ...state.plans };
+    for (const w of WEEKENDS) {
+      const p = state.plans[w];
+      const byId = all[w].byId;
+      const sel = p.sel.filter((id) => byId.has(id));
+      if (sel.length === p.sel.length) continue;
+      const notes: Record<string, string> = {};
+      for (const id of sel) {
+        if (p.notes[id] !== undefined) notes[id] = p.notes[id];
+      }
+      plans[w] = { ...p, sel, notes };
+      changed = true;
     }
-    setState({
-      ...state,
-      plans: { ...state.plans, [state.weekend]: { ...current, sel, notes } },
-    });
-  }, [ready, state, setState]);
+    if (changed) setState({ ...state, plans });
+  }, [all, state, setState]);
 
   const setPlan = (next: WeekendPlan): void => {
     setState({ ...state, plans: { ...state.plans, [state.weekend]: next } });
@@ -95,7 +102,7 @@ export default function App() {
   ).length;
   const selCount = DAYS.reduce((n, d) => n + byDaySelected[d].length, 0);
 
-  const notePerf = ready && openId ? ready.byId.get(openId) : undefined;
+  const notePerf = data && openId ? data.byId.get(openId) : undefined;
   const noteClashWith: Performance[] = notePerf
     ? byDaySelected[notePerf.day].filter(
         (p) =>
@@ -110,6 +117,24 @@ export default function App() {
 
   return (
     <div className="app">
+      {hashInvalid && (
+        <div className="hash-warn" role="alert">
+          <span>
+            This link’s saved lineup couldn’t be read — it may be corrupted or
+            truncated. Showing your current view instead.
+          </span>
+          <div className="toolbar__spacer" />
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Dismiss"
+            onClick={() => setState(state)}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       <Toolbar
         weekend={state.weekend}
         day={state.day}
@@ -125,11 +150,11 @@ export default function App() {
       />
 
       <div className="body">
-        {ready ? (
+        {data ? (
           <Timetable
-            layout={ready.dayLayout[state.day]}
+            layout={data.dayLayout[state.day]}
             orient={state.orient}
-            performances={ready.byDay[state.day]}
+            performances={data.byDay[state.day]}
             selected={selected}
             clashes={clashes}
             notes={plan.notes}
@@ -139,16 +164,16 @@ export default function App() {
         ) : (
           <div className="splash">
             {errored === null ? (
-              <span className="muted">Loading the {state.weekend} lineup…</span>
+              <span className="muted">Loading the lineups…</span>
             ) : (
               <>
                 <span className="muted">
-                  Couldn’t load the lineup — {errored}
+                  Couldn’t load the lineups — {errored}
                 </span>
                 <button
                   type="button"
                   className="btn btn--primary"
-                  onClick={lineup.reload}
+                  onClick={lineups.reload}
                 >
                   Retry
                 </button>
@@ -160,6 +185,9 @@ export default function App() {
         <Sidebar
           key={state.weekend}
           open={lineupOpen}
+          weekend={state.weekend}
+          onWeekend={(weekend) => setState({ ...state, weekend })}
+          name={state.name ?? ''}
           byDaySelected={byDaySelected}
           clashes={clashes}
           notes={plan.notes}
@@ -167,6 +195,7 @@ export default function App() {
           planNote={plan.planNote}
           shareUrl={shareUrl}
           tooLong={shareUrl.length > 8000}
+          onName={(name) => setState({ ...state, name })}
           onPlanNote={(planNote) => setPlan({ ...plan, planNote })}
           onRemove={toggle}
           onEditNote={setOpenId}

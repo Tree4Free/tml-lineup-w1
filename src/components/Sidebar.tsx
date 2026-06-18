@@ -1,9 +1,18 @@
 import { useState } from 'react';
-import { DAYS, type Day, type Performance } from '../types';
+import {
+  DAYS,
+  WEEKENDS,
+  type Day,
+  type Performance,
+  type Weekend,
+} from '../types';
 import { formatMinutes } from '../lib/time';
 
 interface Props {
   open: boolean;
+  weekend: Weekend;
+  onWeekend: (w: Weekend) => void;
+  name: string;
   byDaySelected: Record<Day, Performance[]>;
   clashes: Set<string>;
   notes: Record<string, string>;
@@ -11,6 +20,7 @@ interface Props {
   planNote: string;
   shareUrl: string;
   tooLong: boolean;
+  onName: (name: string) => void;
   onPlanNote: (text: string) => void;
   onRemove: (id: string) => void;
   onEditNote: (id: string) => void;
@@ -20,6 +30,9 @@ interface Props {
 
 export function Sidebar({
   open,
+  weekend,
+  onWeekend,
+  name,
   byDaySelected,
   clashes,
   notes,
@@ -27,6 +40,7 @@ export function Sidebar({
   planNote,
   shareUrl,
   tooLong,
+  onName,
   onPlanNote,
   onRemove,
   onEditNote,
@@ -35,6 +49,13 @@ export function Sidebar({
 }: Props) {
   const [note, setNote] = useState(planNote);
   const [copied, setCopied] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(name);
+
+  const saveName = (): void => {
+    setEditingName(false);
+    onName(nameDraft.trim());
+  };
 
   const total = DAYS.reduce((n, d) => n + byDaySelected[d].length, 0);
   const clashCount = clashes.size;
@@ -57,8 +78,51 @@ export function Sidebar({
         aria-hidden="true"
       />
       <aside className={`sidebar ${open ? 'sidebar--open' : ''}`}>
+        <div className="sidebar__weekends">
+          {WEEKENDS.map((w) => (
+            <button
+              key={w}
+              type="button"
+              className={`wktab ${w === weekend ? 'wktab--on' : ''}`}
+              onClick={() => onWeekend(w)}
+            >
+              Weekend {w.slice(1)}
+            </button>
+          ))}
+        </div>
+
         <div className="sidebar__head">
-          <h2>My Lineup</h2>
+          {editingName ? (
+            <input
+              className="lineup-name-input"
+              autoFocus
+              value={nameDraft}
+              placeholder="My Lineup"
+              maxLength={60}
+              onChange={(e) => setNameDraft(e.target.value)}
+              onBlur={saveName}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') saveName();
+                else if (e.key === 'Escape') setEditingName(false);
+              }}
+            />
+          ) : (
+            <>
+              <h2 className="lineup-name">{name || 'My Lineup'}</h2>
+              <button
+                type="button"
+                className="icon-btn"
+                title="Rename lineup"
+                aria-label="Rename lineup"
+                onClick={() => {
+                  setNameDraft(name);
+                  setEditingName(true);
+                }}
+              >
+                ✎
+              </button>
+            </>
+          )}
           <span className="chip chip--accent">{total}</span>
           <div className="toolbar__spacer" />
           <button

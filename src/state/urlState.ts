@@ -17,6 +17,7 @@ const emptyPlan = (): WeekendPlan => ({ sel: [], notes: {}, planNote: '' });
 
 export const DEFAULT_STATE: ShareState = {
   v: 2,
+  name: '',
   weekend: 'W1',
   day: 'FRIDAY',
   orient: 'h',
@@ -24,7 +25,7 @@ export const DEFAULT_STATE: ShareState = {
   plans: { W1: emptyPlan(), W2: emptyPlan() },
 };
 
-function planHasContent(p: WeekendPlan): boolean {
+export function planHasContent(p: WeekendPlan): boolean {
   return (
     p.sel.length > 0 ||
     Object.keys(p.notes).length > 0 ||
@@ -33,10 +34,13 @@ function planHasContent(p: WeekendPlan): boolean {
 }
 
 // There's only something worth putting in the URL once the user has built a
-// plan — picks, a per-set note, or a plan note, in either weekend. View-only
-// prefs (weekend, day, orientation, focus) don't dirty the URL on their own.
+// plan — a name, picks, a per-set note, or a plan note. View-only prefs
+// (weekend, day, orientation, focus) don't dirty the URL on their own.
 function isShareable(s: ShareState): boolean {
-  return WEEKENDS.some((w) => planHasContent(s.plans[w]));
+  return (
+    (s.name ?? '').trim() !== '' ||
+    WEEKENDS.some((w) => planHasContent(s.plans[w]))
+  );
 }
 
 export function encodeState(s: ShareState): string {
@@ -73,10 +77,13 @@ function migrate(parsed: unknown): ShareState {
   const orient: Orientation = p.orient === 'v' ? 'v' : 'h';
   const focus = Boolean(p.focus);
 
+  const name = typeof p.name === 'string' ? p.name : '';
+
   if (p.v === 2) {
     const plans = (p.plans ?? {}) as Record<string, unknown>;
     return {
       v: 2,
+      name,
       weekend: WEEKENDS.includes(p.weekend as Weekend)
         ? (p.weekend as Weekend)
         : 'W1',
@@ -90,6 +97,7 @@ function migrate(parsed: unknown): ShareState {
   // Legacy v1 (or unknown): treat the flat fields as the W1 plan.
   return {
     v: 2,
+    name,
     weekend: 'W1',
     day,
     orient,
@@ -98,33 +106,66 @@ function migrate(parsed: unknown): ShareState {
   };
 }
 
-export function decodeState(hash: string): ShareState {
+// Returns null for an invalid/unreadable hash so callers can decide what to do
+// (default it on first load, but ignore it mid-session rather than wiping state).
+export function decodeState(hash: string): ShareState | null {
   const raw = hash.replace(/^#s=/, '');
-  if (!raw) return DEFAULT_STATE;
+  if (!raw) return null;
+  let parsed: unknown;
   try {
     const json = decompressFromEncodedURIComponent(raw);
-    return migrate(json ? JSON.parse(json) : null);
+    if (!json) return null;
+    parsed = JSON.parse(json);
   } catch {
-    return DEFAULT_STATE; // unreadable/foreign hash → clean default view
+    return null;
   }
+  if (typeof parsed !== 'object' || parsed === null) return null;
+  return migrate(parsed);
 }
 
 function initialState(): ShareState {
-  if (location.hash) return decodeState(location.hash);
-  // No shared link yet: phones default to the vertical layout (the wide grid
-  // can't fit a narrow screen).
+  const decoded = decodeState(location.hash);
+  if (decoded) return decoded;
+  // No (valid) shared link: phones default to the vertical layout (the wide
+  // grid can't fit a narrow screen).
   const narrow =
     typeof window !== 'undefined' && window.innerWidth < 640 ? 'v' : 'h';
   return { ...DEFAULT_STATE, orient: narrow };
 }
 
-export function useUrlState(): [ShareState, (next: ShareState) => void] {
+export function useUrlState(): [
+  ShareState,
+  (next: ShareState) => void,
+  boolean,
+] {
   const [state, setState] = useState<ShareState>(initialState);
+  const [hashInvalid, setHashInvalid] = useState(
+    () => location.hash !== '' && decodeState(location.hash) === null,
+  );
 
   useEffect(() => {
-    const onHash = () => setState(decodeState(location.hash));
-    window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
+    // Adopt a hash that someone typed/pasted into the address bar. `hashchange`
+    // covers most browsers; `popstate` covers back/forward; `focus` is the
+    // backstop for browsers that fire neither on an address-bar commit (focus
+    // always returns to the page after Enter). We only adopt a valid hash that
+    // differs from the current state, so clean URLs and view-only prefs (which
+    // aren't encoded) are never clobbered and our replaceState writes don't loop.
+    const sync = () => {
+      const hasHash = location.hash !== '';
+      const fromUrl = hasHash ? decodeState(location.hash) : null;
+      setHashInvalid(hasHash && fromUrl === null);
+      if (!fromUrl) return; // empty or invalid → keep the current view
+      const encoded = encodeState(fromUrl);
+      setState((prev) => (encoded !== encodeState(prev) ? fromUrl : prev));
+    };
+    window.addEventListener('hashchange', sync);
+    window.addEventListener('popstate', sync);
+    window.addEventListener('focus', sync);
+    return () => {
+      window.removeEventListener('hashchange', sync);
+      window.removeEventListener('popstate', sync);
+      window.removeEventListener('focus', sync);
+    };
   }, []);
 
   const update = useCallback((next: ShareState) => {
@@ -132,8 +173,9 @@ export function useUrlState(): [ShareState, (next: ShareState) => void] {
       ? '#s=' + encodeState(next)
       : location.pathname + location.search; // clean URL until there's a plan
     history.replaceState(null, '', url);
+    setHashInvalid(false); // we just wrote a valid hash (or a clean URL)
     setState(next);
   }, []);
 
-  return [state, update];
+  return [state, update, hashInvalid];
 }

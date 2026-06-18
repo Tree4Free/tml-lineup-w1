@@ -47,6 +47,8 @@ export interface WeekendPlan {
 /** The complete, shareable view — the single source of truth, encoded into the URL hash. */
 export interface ShareState {
   v: 2;
+  /** Custom lineup name shared across weekends (empty → shown as "My Lineup"). */
+  name: string;
   /** Which weekend's lineup is loaded. */
   weekend: Weekend;
   day: Day;
