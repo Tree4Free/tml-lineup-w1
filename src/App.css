@@ -541,7 +541,8 @@
   border-color: var(--accent);
   box-shadow: var(--shadow-sm);
   transform: translateY(-1px);
-  z-index: 5;
+  /* Stay below the sticky axis headers (z-index 3/4) while scrolling. */
+  z-index: 2;
 }
 .block--sel {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
@@ -552,8 +553,10 @@
   outline: 2px solid var(--warn);
   outline-offset: -2px;
 }
-/* Search highlight (box-shadow ring, so it stacks with the clash outline). */
-.block--match {
+/* Search highlight (box-shadow ring, so it stacks with the clash outline).
+   `.block.block--match` ties :hover specificity and comes later, so a hovered
+   match keeps its above-axis z-index. */
+.block.block--match {
   box-shadow: 0 0 0 3px var(--hl);
   z-index: 6;
 }
@@ -572,7 +575,7 @@
     box-shadow: 0 0 0 3px var(--hl);
   }
 }
-.block--jump {
+.block.block--jump {
   box-shadow: 0 0 0 3px var(--hl);
   animation: blockJump 0.45s ease 2;
   z-index: 8;
