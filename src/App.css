@@ -189,6 +189,17 @@
 }
 .lineup-toggle {
   display: none;
+  position: relative;
+}
+.lineup-clash-dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--warn);
+  border: 2px solid var(--surface);
 }
 
 .theme-toggle {
@@ -938,6 +949,10 @@ textarea:focus,
     display: inline-block;
   }
   .ghlink {
+    display: none;
+  }
+  /* Clash count moves onto the Lineup button (a dot) to save a row. */
+  .chip--warn {
     display: none;
   }
   .tt {

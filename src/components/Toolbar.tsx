@@ -170,9 +170,15 @@ export function Toolbar({
       <button
         type="button"
         className="btn btn--primary lineup-toggle"
+        aria-label={`My lineup, ${selCount} sets${
+          clashCount > 0 ? `, ${clashCount} clashes` : ''
+        }`}
         onClick={onToggleLineup}
       >
         Lineup · {selCount}
+        {clashCount > 0 && (
+          <span className="lineup-clash-dot" aria-hidden="true" />
+        )}
       </button>
 
       <ThemeToggle />
