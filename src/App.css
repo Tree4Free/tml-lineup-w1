@@ -104,6 +104,7 @@
   gap: 2px;
 }
 .seg__btn {
+  position: relative;
   border: none;
   background: transparent;
   color: var(--muted);
@@ -369,14 +370,15 @@
   height: 16px;
 }
 
+/* Absolutely positioned so appearing/disappearing never shifts the day tabs. */
 .tab-dot {
-  display: inline-block;
+  position: absolute;
+  top: 3px;
+  right: 4px;
   width: 5px;
   height: 5px;
-  margin-left: 4px;
   border-radius: 50%;
   background: var(--hl);
-  vertical-align: middle;
 }
 
 /* ---------- Body layout ---------- */
