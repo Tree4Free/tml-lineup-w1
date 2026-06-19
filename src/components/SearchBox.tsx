@@ -4,6 +4,7 @@ interface Props {
   query: string;
   matchCount: number;
   onQuery: (q: string) => void;
+  onJumpNext: () => void;
 }
 
 function SearchIcon() {
@@ -32,7 +33,7 @@ function SearchIcon() {
  * is always shown on wider screens. Collapsing also clears the query so there's
  * never a hidden active filter.
  */
-export function SearchBox({ query, matchCount, onQuery }: Props) {
+export function SearchBox({ query, matchCount, onQuery, onJumpNext }: Props) {
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -75,9 +76,19 @@ export function SearchBox({ query, matchCount, onQuery }: Props) {
           onChange={(e) => onQuery(e.target.value)}
         />
         {query !== '' && (
-          <span className="search__count" aria-live="polite">
-            {matchCount}
-          </span>
+          <button
+            type="button"
+            className="search__count"
+            disabled={matchCount === 0}
+            title="Jump to next match on this day"
+            aria-label={`${matchCount} matches on this day. Jump to the next.`}
+            onClick={onJumpNext}
+          >
+            <span aria-live="polite">{matchCount}</span>
+            <span className="search__count-arrow" aria-hidden="true">
+              ↵
+            </span>
+          </button>
         )}
         {query !== '' && (
           <button

@@ -21,6 +21,7 @@ interface Props {
   matchDays: Set<Day>;
   onlyMyStages: boolean;
   onQuery: (q: string) => void;
+  onJumpNext: () => void;
   onWeekend: (w: Weekend) => void;
   onDay: (d: Day) => void;
   onOrient: (o: Orientation) => void;
@@ -41,6 +42,7 @@ export function Toolbar({
   matchDays,
   onlyMyStages,
   onQuery,
+  onJumpNext,
   onWeekend,
   onDay,
   onOrient,
@@ -86,7 +88,12 @@ export function Toolbar({
         ))}
       </div>
 
-      <SearchBox query={query} matchCount={matchCount} onQuery={onQuery} />
+      <SearchBox
+        query={query}
+        matchCount={matchCount}
+        onQuery={onQuery}
+        onJumpNext={onJumpNext}
+      />
 
       <div className="toolbar__spacer" />
 

@@ -38,6 +38,7 @@ export function PerformanceBlock({
   return (
     <button
       type="button"
+      data-perf-id={perf.id}
       className={cls.join(' ')}
       style={style}
       aria-pressed={selected}
