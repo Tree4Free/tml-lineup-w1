@@ -214,7 +214,7 @@ export default function App() {
     location.origin + location.pathname + '#s=' + encodeState(state);
 
   return (
-    <div className="app">
+    <div className={`app${lineupOpen ? ' app--lineup-open' : ''}`}>
       {hashInvalid && (
         <div className="hash-warn" role="alert">
           <span>

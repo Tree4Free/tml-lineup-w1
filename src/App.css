@@ -695,6 +695,7 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
+  overscroll-behavior: contain;
   padding: 8px 10px;
 }
 .empty {
@@ -1031,6 +1032,12 @@ textarea:focus,
   }
   .sidebar__close {
     display: inline-block;
+  }
+
+  /* With the drawer open, lock the timetable so only the lineup list scrolls. */
+  .app--lineup-open .tt {
+    overflow: hidden;
+    touch-action: none;
   }
 }
 
